@@ -12,8 +12,8 @@ spring:
     username: root
     password: mysql
 # 日志文件配置路径
-#logging:
-#  config: classpath:log4j2-dev.xml
+logging:
+  config: classpath:log4j2-dev.xml
 
 swagger:
   title: "学成在线内容管理系统"
