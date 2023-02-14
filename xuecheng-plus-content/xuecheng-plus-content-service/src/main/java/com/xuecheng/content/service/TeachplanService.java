@@ -1,5 +1,6 @@
 package com.xuecheng.content.service;
 
+import com.xuecheng.content.model.dto.DeleteTeachPlanDto;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
 
@@ -24,4 +25,11 @@ public interface TeachplanService {
   * @param saveTeachplanDto
   */
  public void saveTeachplan(SaveTeachplanDto saveTeachplanDto);
+
+ /**
+  * 根据teachPlan id删除课程计划
+  * @param id  teachPlan id
+  * @return DeleteTeachPlanDto
+  */
+ public DeleteTeachPlanDto deleteTeachplan( Long id);
 }
