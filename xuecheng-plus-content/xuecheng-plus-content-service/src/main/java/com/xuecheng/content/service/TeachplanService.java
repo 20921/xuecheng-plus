@@ -31,4 +31,6 @@ public interface TeachplanService {
   * @param id  课程计划的id
   */
  public void moveUp(Long id);
+
+    void movedown(Long id);
 }

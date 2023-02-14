@@ -98,4 +98,34 @@ public class TeachplanServiceImpl implements TeachplanService {
         teachplanMapper.updateById(teachplan);
         teachplanMapper.updateById(teachPlanLt);
     }
+
+    @Override
+    public void movedown(Long id) {
+        //取当前课程计划的排序字段
+        Teachplan teachplan = teachplanMapper.selectById(id);
+        Integer orderby = teachplan.getOrderby();
+
+        //orderby比他大的 课程计划
+        Long parentId = teachplan.getParentid();
+        Long courseId = teachplan.getCourseId();
+
+        LambdaQueryWrapper<Teachplan> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Teachplan::getCourseId, courseId).eq(Teachplan::getParentid, parentId);
+
+        wrapper.gt(Teachplan::getOrderby,orderby);
+        List<Teachplan> teachPlansGt = teachplanMapper.selectList(wrapper);
+
+        //判断是不是最大的一个
+        if (CollectionUtils.isEmpty(teachPlansGt)){
+            XueChengPlusException.cast("不能再向下移动辣！！！");
+        }
+
+        Teachplan teachPlanGt = teachPlansGt.get(0);
+        int temp = teachPlanGt.getOrderby();
+        teachPlanGt.setOrderby(teachplan.getOrderby());
+        teachplan.setOrderby(temp);
+//存表
+        teachplanMapper.updateById(teachplan);
+        teachplanMapper.updateById(teachPlanGt);
+    }
 }
