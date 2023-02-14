@@ -24,4 +24,11 @@ public interface TeachplanService {
   * @param saveTeachplanDto
   */
  public void saveTeachplan(SaveTeachplanDto saveTeachplanDto);
+
+
+ /**
+  * 课程计划上移
+  * @param id  课程计划的id
+  */
+ public void moveUp(Long id);
 }

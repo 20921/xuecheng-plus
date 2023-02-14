@@ -38,4 +38,10 @@ public class TeachplanController {
         teachplanService.saveTeachplan(teachplan);
     }
 
+
+    @ApiOperation("教学计划排序向上移动")
+    @PostMapping("/teachplan/moveup/{id}")
+    public void orderByMoveUp(@PathVariable Long id){
+        teachplanService.moveUp(id);
+    }
 }
