@@ -1,6 +1,8 @@
 package com.xuecheng.content.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.content.mapper.TeachplanMapper;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
@@ -67,5 +69,42 @@ public class TeachplanServiceImpl implements TeachplanService {
             BeanUtils.copyProperties(saveTeachplanDto, teachplan);
             teachplanMapper.updateById(teachplan);
         }
+
+
+    }
+
+    @Override
+    public void moveUp(Long id) {
+        //取当前课程计划的排序字段
+        Teachplan teachplan = teachplanMapper.selectById(id);
+        Integer orderby = teachplan.getOrderby();
+
+        //orderby比他小的 课程计划
+        Long parentId = teachplan.getParentid();
+        Long courseId = teachplan.getCourseId();
+
+        LambdaQueryWrapper<Teachplan> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Teachplan::getCourseId, courseId).eq(Teachplan::getParentid, parentId);
+
+        wrapper.lt(Teachplan::getOrderby,orderby);
+
+        List<Teachplan> teachPlansLt = teachplanMapper.selectList(wrapper);
+
+        //判断是不是最小的一个
+        if (CollectionUtils.isEmpty(teachPlansLt)){
+            XueChengPlusException.cast("不能再向上移动辣！！！");
+        }
+
+        //不是最小就交换顺序
+        Teachplan teachPlanLt = teachPlansLt.get(teachPlansLt.size() - 1);
+        int temp = teachPlanLt.getOrderby();
+        teachPlanLt.setOrderby(teachplan.getOrderby());
+        teachplan.setOrderby(temp);
+
+
+
+        //存表
+        teachplanMapper.updateById(teachplan);
+        teachplanMapper.updateById(teachPlanLt);
     }
 }
