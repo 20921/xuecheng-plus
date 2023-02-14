@@ -10,6 +10,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -30,34 +33,39 @@ public class TeachplanServiceImpl implements TeachplanService {
         return teachplanDtos;
     }
 
-    private int getTeachplanCount(Long courseId,Long parentId){
+    private List<Teachplan> getTeachplan(Long courseId, Long parentId) {
         LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper = queryWrapper.eq(Teachplan::getCourseId, courseId).eq(Teachplan::getParentid, parentId);
-        Integer count = teachplanMapper.selectCount(queryWrapper);
-        return  count+1;
+        List<Teachplan> teachplans = teachplanMapper.selectList(queryWrapper);
+        return teachplans;
     }
+
     @Override
     public void saveTeachplan(SaveTeachplanDto saveTeachplanDto) {
         //通过课程计划id判断是新增和修改
         Long teachplanId = saveTeachplanDto.getId();
-        if(teachplanId ==null){
+        if (teachplanId == null) {
             //新增
             Teachplan teachplan = new Teachplan();
-            BeanUtils.copyProperties(saveTeachplanDto,teachplan);
+            BeanUtils.copyProperties(saveTeachplanDto, teachplan);
             //确定排序字段，找到它的同级节点个数，排序字段就是个数加1  select count(1) from teachplan where course_id=117 and parentid=268
             Long parentid = saveTeachplanDto.getParentid();
             Long courseId = saveTeachplanDto.getCourseId();
-            int teachplanCount = getTeachplanCount(courseId, parentid);
-            teachplan.setOrderby(teachplanCount);
+            //获取出全部信息
+            List<Teachplan> teachplanAll = getTeachplan(courseId, parentid);
+            if (teachplanAll.size() != 0) {
+                //排序字段的最大值
+                Teachplan teachplanMax = teachplanAll.stream().max(Comparator.comparing(Teachplan::getOrderby)).get();
+                //将最大值+1
+                teachplan.setOrderby(teachplanMax.getOrderby() + 1);
+            }
             teachplanMapper.insert(teachplan);
-
-        }else{
+        } else {
             //修改
             Teachplan teachplan = teachplanMapper.selectById(teachplanId);
             //将参数复制到teachplan
-            BeanUtils.copyProperties(saveTeachplanDto,teachplan);
+            BeanUtils.copyProperties(saveTeachplanDto, teachplan);
             teachplanMapper.updateById(teachplan);
         }
-
     }
 }
