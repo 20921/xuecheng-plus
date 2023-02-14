@@ -44,4 +44,11 @@ public class TeachplanController {
     public void orderByMoveUp(@PathVariable Long id){
         teachplanService.moveUp(id);
     }
+
+
+    @ApiOperation("教学计划排序向下移动")
+    @PostMapping("/teachplan/movedown/{id}")
+    public void orderByMovedown(@PathVariable Long id){
+        teachplanService.movedown(id);
+    }
 }
