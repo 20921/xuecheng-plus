@@ -39,6 +39,11 @@ public class CourseTeacherController {
         Long company = 1232141425L;
         return courseTeacherService.saveCourseTeacher(company, courseTeacher);
     }
+    @PutMapping("/courseTeacher")
+    public CourseTeacher updateCourseTeacher(@RequestBody @Validated CourseTeacher courseTeacher) {
+        Long company = 1232141425L;
+        return courseTeacherService.saveCourseTeacher(company, courseTeacher);
+    }
 
     /**
      * 删除课程中对应教师信息(只能删除本机构教师信息)
