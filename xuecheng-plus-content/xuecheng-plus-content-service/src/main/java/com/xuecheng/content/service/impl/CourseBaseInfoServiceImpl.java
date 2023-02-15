@@ -6,16 +6,18 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
-import com.xuecheng.content.mapper.*;
-import com.xuecheng.content.model.dto.*;
+import com.xuecheng.content.mapper.CourseBaseMapper;
+import com.xuecheng.content.mapper.CourseCategoryMapper;
+import com.xuecheng.content.mapper.CourseMarketMapper;
+import com.xuecheng.content.model.dto.AddCourseDto;
+import com.xuecheng.content.model.dto.CourseBaseInfoDto;
+import com.xuecheng.content.model.dto.EditCourseDto;
+import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
+import com.xuecheng.content.model.po.CourseCategory;
 import com.xuecheng.content.model.po.CourseMarket;
-import com.xuecheng.content.model.po.CourseTeacher;
-import com.xuecheng.content.model.po.Teachplan;
 import com.xuecheng.content.service.CourseBaseInfoService;
-import com.xuecheng.content.service.TeachplanService;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jsqlparser.statement.Commit;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +36,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
-public class CourseBaseInfoServiceImpl extends ServiceImpl<CourseBaseMapper,CourseBase> implements CourseBaseInfoService {
+public class CourseBaseInfoServiceImpl extends ServiceImpl<CourseBaseMapper, CourseBase> implements CourseBaseInfoService {
     @Autowired
     CourseBaseMapper courseBaseMapper;
 
@@ -44,22 +46,23 @@ public class CourseBaseInfoServiceImpl extends ServiceImpl<CourseBaseMapper,Cour
     @Autowired
     CourseCategoryMapper courseCategoryMapper;
 
-    @Autowired
-    TeachplanMapper teachplanMapper;
-
-    @Autowired
-    CourseTeacherMapper courseTeacherMapper;
-
     @Override
     public PageResult<CourseBase> queryCourseBaseList(PageParams pageParams, QueryCourseParamsDto courseParamsDto) {
 
         //拼装查询条件
         LambdaQueryWrapper<CourseBase> queryWrapper = new LambdaQueryWrapper<>();
         //根据名称模糊查询,在sql中拼接 course_base.name like '%值%'
-        queryWrapper.like(StringUtils.isNotEmpty(courseParamsDto.getCourseName()), CourseBase::getName, courseParamsDto.getCourseName());
+        queryWrapper.like(StringUtils.isNotEmpty(courseParamsDto.getCourseName())
+                , CourseBase::getName
+                , courseParamsDto.getCourseName());
         //根据课程审核状态查询 course_base.audit_status = ?
-        queryWrapper.eq(StringUtils.isNotEmpty(courseParamsDto.getAuditStatus()), CourseBase::getAuditStatus, courseParamsDto.getAuditStatus());
-        //todo:按课程发布状态查询
+        queryWrapper.eq(StringUtils.isNotEmpty(courseParamsDto.getAuditStatus())
+                , CourseBase::getAuditStatus
+                , courseParamsDto.getAuditStatus());
+        //按课程发布状态查询
+        queryWrapper.eq(org.apache.commons.lang.StringUtils.isNotEmpty(courseParamsDto.getPublishStatus())
+                , CourseBase::getStatus
+                , courseParamsDto.getPublishStatus());
 
         //创建page分页参数对象，参数：当前页码，每页记录数
         Page<CourseBase> page = new Page<>(pageParams.getPageNo(), pageParams.getPageSize());
@@ -162,8 +165,11 @@ public class CourseBaseInfoServiceImpl extends ServiceImpl<CourseBaseMapper,Cour
         }
 
         //通过courseCategoryMapper查询分类信息，将分类名称放在courseBaseInfoDto对象
-        //todo：课程分类的名称设置到courseBaseInfoDto
-
+        //课程分类的名称设置到courseBaseInfoDto
+        CourseCategory courseCategoryBySt = courseCategoryMapper.selectById(courseBase.getSt());
+        courseBaseInfoDto.setStName(courseCategoryBySt.getName());
+        CourseCategory courseCategoryByMt = courseCategoryMapper.selectById(courseBase.getMt());
+        courseBaseInfoDto.setMtName(courseCategoryByMt.getName());
         return courseBaseInfoDto;
 
     }
@@ -198,38 +204,16 @@ public class CourseBaseInfoServiceImpl extends ServiceImpl<CourseBaseMapper,Cour
         }
         //更新营销信息
         //todo:更新营销信息
+        //查询营销信息
+        CourseMarket courseMarket = courseMarketMapper.selectById(courseId);
+        //将老数据替换
+        BeanUtils.copyProperties(editCourseDto,courseMarket);
+        //调用之前写的方法
+        saveCourseMarket(courseMarket);
         //查询课程信息
         CourseBaseInfoDto courseBaseInfo = getCourseBaseInfo(courseId);
 
         return courseBaseInfo;
-    }
-
-    @Override
-    @Transactional
-    public void deleteCourseBaseById(Long courseId) {
-        //根据id查询课程
-        CourseBase courseBase = courseBaseMapper.selectById(courseId);
-        //防止测试不是直接从前端发请求做一个校验
-        //当课程不存在时,抛异常
-        if (courseBase == null) {
-            XueChengPlusException.cast("课程不存在无法删除");
-        }
-        //当审核状态是未提交时抛异常
-        if (!courseBase.getAuditStatus().equals("202002")) {
-            XueChengPlusException.cast("课程不是未提交状态无法删除");
-        }
-        //删除课程的基本信息
-        courseBaseMapper.deleteById(courseId);
-        //删除课程营销表
-        courseMarketMapper.deleteById(courseId);
-        //删除课程计划表
-        LambdaQueryWrapper<Teachplan> teachplanWrapper = new LambdaQueryWrapper<>();
-        teachplanWrapper.eq(Teachplan::getCourseId, courseId);
-        teachplanMapper.delete(teachplanWrapper);
-        //删除课程教师信息表
-        LambdaQueryWrapper<CourseTeacher> teacherWrapper=new LambdaQueryWrapper<>();
-        teacherWrapper.eq(CourseTeacher::getCourseId,courseId);
-        courseTeacherMapper.delete(teacherWrapper);
     }
 
     //单独写一个方法保存营销信息，逻辑：存在则更新，不存在则添加
