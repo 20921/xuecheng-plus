@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 /**
  * <p>
  * 课程-教师关系表 服务实现类
@@ -33,6 +35,7 @@ public class CourseTeacherServiceImpl extends ServiceImpl<CourseTeacherMapper, C
         Long companyId = courseBaseService.getById(courseTeacher.getCourseId()).getCompanyId();
         if (!company.equals(companyId))
             XueChengPlusException.cast("只能修改或新增本机构对应教师信息");
+        courseTeacher.setCreateDate(LocalDateTime.now());
         this.saveOrUpdate(courseTeacher);
         return this.getById(courseTeacher.getId());
     }
