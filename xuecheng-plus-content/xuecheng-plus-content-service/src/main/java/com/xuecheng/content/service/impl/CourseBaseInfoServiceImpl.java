@@ -6,16 +6,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
-import com.xuecheng.content.mapper.CourseBaseMapper;
-import com.xuecheng.content.mapper.CourseCategoryMapper;
-import com.xuecheng.content.mapper.CourseMarketMapper;
+import com.xuecheng.content.mapper.*;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
 import com.xuecheng.content.model.dto.EditCourseDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
-import com.xuecheng.content.model.po.CourseBase;
-import com.xuecheng.content.model.po.CourseCategory;
-import com.xuecheng.content.model.po.CourseMarket;
+import com.xuecheng.content.model.po.*;
 import com.xuecheng.content.service.CourseBaseInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -45,6 +41,12 @@ public class CourseBaseInfoServiceImpl extends ServiceImpl<CourseBaseMapper, Cou
 
     @Autowired
     CourseCategoryMapper courseCategoryMapper;
+
+    @Autowired
+    TeachplanMapper teachplanMapper;
+
+    @Autowired
+    CourseTeacherMapper courseTeacherMapper;
 
     @Override
     public PageResult<CourseBase> queryCourseBaseList(PageParams pageParams, QueryCourseParamsDto courseParamsDto) {
@@ -214,6 +216,34 @@ public class CourseBaseInfoServiceImpl extends ServiceImpl<CourseBaseMapper, Cou
         CourseBaseInfoDto courseBaseInfo = getCourseBaseInfo(courseId);
 
         return courseBaseInfo;
+    }
+
+    @Override
+    @Transactional
+    public void deleteCourseBaseById(Long courseId) {
+        //根据id查询课程
+        CourseBase courseBase = courseBaseMapper.selectById(courseId);
+        //防止测试不是直接从前端发请求做一个校验
+        //当课程不存在时,抛异常
+        if (courseBase == null) {
+            XueChengPlusException.cast("课程不存在无法删除");
+        }
+        //当审核状态是未提交时抛异常
+        if (!courseBase.getAuditStatus().equals("202002")) {
+            XueChengPlusException.cast("课程不是未提交状态无法删除");
+        }
+        //删除课程的基本信息
+        courseBaseMapper.deleteById(courseId);
+        //删除课程营销表
+        courseMarketMapper.deleteById(courseId);
+        //删除课程计划表
+        LambdaQueryWrapper<Teachplan> teachplanWrapper = new LambdaQueryWrapper<>();
+        teachplanWrapper.eq(Teachplan::getCourseId, courseId);
+        teachplanMapper.delete(teachplanWrapper);
+        //删除课程教师信息表
+        LambdaQueryWrapper<CourseTeacher> teacherWrapper=new LambdaQueryWrapper<>();
+        teacherWrapper.eq(CourseTeacher::getCourseId,courseId);
+        courseTeacherMapper.delete(teacherWrapper);
     }
 
     //单独写一个方法保存营销信息，逻辑：存在则更新，不存在则添加
