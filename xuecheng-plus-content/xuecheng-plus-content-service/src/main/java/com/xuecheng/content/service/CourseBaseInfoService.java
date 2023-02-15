@@ -1,7 +1,9 @@
 package com.xuecheng.content.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
+import com.xuecheng.content.mapper.CourseBaseMapper;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
 import com.xuecheng.content.model.dto.EditCourseDto;
@@ -14,7 +16,7 @@ import com.xuecheng.content.model.po.CourseBase;
  * @description 课程信息管理接口
  * @date 2023/2/12 10:14
  */
-public interface CourseBaseInfoService {
+public interface CourseBaseInfoService extends IService<CourseBase> {
 
     /**
      * 课程分页查询

@@ -2,6 +2,7 @@ package com.xuecheng.content.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
@@ -14,6 +15,7 @@ import com.xuecheng.content.model.po.Teachplan;
 import com.xuecheng.content.service.CourseBaseInfoService;
 import com.xuecheng.content.service.TeachplanService;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jsqlparser.statement.Commit;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +34,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
-public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
+public class CourseBaseInfoServiceImpl extends ServiceImpl<CourseBaseMapper,CourseBase> implements CourseBaseInfoService {
     @Autowired
     CourseBaseMapper courseBaseMapper;
 
