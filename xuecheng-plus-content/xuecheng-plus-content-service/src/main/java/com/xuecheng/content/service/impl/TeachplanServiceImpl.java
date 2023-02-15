@@ -45,7 +45,7 @@ public class TeachplanServiceImpl implements TeachplanService {
         //通过课程计划id判断是新增和修改
         Long teachplanId = saveTeachplanDto.getId();
         if (teachplanId == null) {
-            //新增
+            //新增hh
             Teachplan teachplan = new Teachplan();
             BeanUtils.copyProperties(saveTeachplanDto, teachplan);
             //确定排序字段，找到它的同级节点个数，排序字段就是个数加1  select count(1) from teachplan where course_id=117 and parentid=268
