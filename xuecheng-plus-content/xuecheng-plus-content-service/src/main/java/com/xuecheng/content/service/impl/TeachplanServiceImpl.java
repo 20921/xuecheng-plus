@@ -91,12 +91,12 @@ public class TeachplanServiceImpl implements TeachplanService {
         LambdaQueryWrapper<Teachplan> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Teachplan::getCourseId, courseId).eq(Teachplan::getParentid, parentId);
 
-        wrapper.lt(Teachplan::getOrderby,orderby);
+        wrapper.lt(Teachplan::getOrderby, orderby);
 
         List<Teachplan> teachPlansLt = teachplanMapper.selectList(wrapper);
 
         //判断是不是最小的一个
-        if (CollectionUtils.isEmpty(teachPlansLt)){
+        if (CollectionUtils.isEmpty(teachPlansLt)) {
             XueChengPlusException.cast("不能再向上移动辣！！！");
         }
 
@@ -105,7 +105,6 @@ public class TeachplanServiceImpl implements TeachplanService {
         int temp = teachPlanLt.getOrderby();
         teachPlanLt.setOrderby(teachplan.getOrderby());
         teachplan.setOrderby(temp);
-
 
 
         //存表
@@ -126,11 +125,11 @@ public class TeachplanServiceImpl implements TeachplanService {
         LambdaQueryWrapper<Teachplan> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Teachplan::getCourseId, courseId).eq(Teachplan::getParentid, parentId);
 
-        wrapper.gt(Teachplan::getOrderby,orderby);
+        wrapper.gt(Teachplan::getOrderby, orderby);
         List<Teachplan> teachPlansGt = teachplanMapper.selectList(wrapper);
 
         //判断是不是最大的一个
-        if (CollectionUtils.isEmpty(teachPlansGt)){
+        if (CollectionUtils.isEmpty(teachPlansGt)) {
             XueChengPlusException.cast("不能再向下移动辣！！！");
         }
 
@@ -142,7 +141,6 @@ public class TeachplanServiceImpl implements TeachplanService {
         teachplanMapper.updateById(teachplan);
         teachplanMapper.updateById(teachPlanGt);
     }
-
 
 
     /**
@@ -162,7 +160,8 @@ public class TeachplanServiceImpl implements TeachplanService {
             wrapper.eq(Teachplan::getParentid, id); // 是否有小章节的 parentId是章节的id
             Integer count = teachplanMapper.selectCount(wrapper);
             if (count > 0) { //说明有子节点
-                return DeleteTeachPlanDto.err();
+                // return DeleteTeachPlanDto.err();
+                XueChengPlusException.cast("课程计划信息还有子级信息，无法操作");
             }
             //到这里说明没有字节点,执行删除
             teachplanMapper.deleteById(id);
