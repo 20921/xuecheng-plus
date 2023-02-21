@@ -9,10 +9,12 @@ import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
 import com.xuecheng.base.model.RestResponse;
 import com.xuecheng.media.mapper.MediaFilesMapper;
+import com.xuecheng.media.mapper.MediaProcessMapper;
 import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
+import com.xuecheng.media.model.po.MediaProcess;
 import com.xuecheng.media.service.MediaFileService;
 import io.minio.*;
 import io.minio.errors.*;
@@ -57,6 +59,9 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     @Autowired
     MediaFileService currentProxy;
+
+    @Autowired
+    MediaProcessMapper mediaProcessMapper;
 
     //获取普通文件桶(不是视频的！)
     @Value("${minio.bucket.files}")
@@ -187,10 +192,34 @@ public class MediaFileServiceImpl implements MediaFileService {
                 XueChengPlusException.cast("保存文件失败");
                 return null;
             }
+            //添加到待处理任务表
+            addWaitingTask(mediaFiles);
             log.info("保存文件到数据库成功,{}", mediaFiles.toString());
             return mediaFiles;
         }
         return mediaFiles;
+    }
+
+    private void addWaitingTask(MediaFiles mediaFiles) {
+        //获取到文件名称
+        String filename = mediaFiles.getFilename();
+        //截取文件后缀
+        String substring = filename.substring(filename.lastIndexOf("."));
+        //获取文件类型
+        String mineType = getMineType(substring);
+        if ("video/x-msvideo".equals(mineType)){
+            //创建待处理对象
+            MediaProcess mediaProcess = new MediaProcess();
+            //copy基本信息
+            BeanUtils.copyProperties(mediaFiles,mediaProcess);
+            //补充缺少信息
+            mediaProcess.setStatus("1");
+            //默认未处理
+            mediaProcess.setCreateDate(LocalDateTime.now());
+            //上传时间
+            mediaProcessMapper.insert(mediaProcess);
+        }
+
     }
 
     //获取到文件默认存储目录路径 年/月/日
